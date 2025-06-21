@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import WhyChooseSection from './components/WhyChooseSection';
@@ -14,21 +15,27 @@ function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>('landing');
 
   if (currentView === 'dashboard') {
-    return <Dashboard />;
+    return (
+      <ThemeProvider>
+        <Dashboard onNavigateToLanding={() => setCurrentView('landing')} />
+      </ThemeProvider>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header onNavigateToDashboard={() => setCurrentView('dashboard')} />
-      <HeroSection onNavigateToDashboard={() => setCurrentView('dashboard')} />
-      <WhyChooseSection />
-      <FeaturesSection />
-      <BenefitsSection />
-      <TestimonialsSection />
-      <DashboardSection onNavigateToDashboard={() => setCurrentView('dashboard')} />
-      <FAQSection />
-      <Footer />
-    </div>
+    <ThemeProvider>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <Header onNavigateToDashboard={() => setCurrentView('dashboard')} />
+        <HeroSection onNavigateToDashboard={() => setCurrentView('dashboard')} />
+        <WhyChooseSection />
+        <FeaturesSection />
+        <BenefitsSection />
+        <TestimonialsSection />
+        <DashboardSection onNavigateToDashboard={() => setCurrentView('dashboard')} />
+        <FAQSection />
+        <Footer />
+      </div>
+    </ThemeProvider>
   );
 }
 

@@ -15,7 +15,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 pt-20">
+    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 pt-20">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
       
@@ -24,14 +24,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
           {/* Content */}
           <div className="text-center lg:text-left">
             <AnimatedSection animation="fade-up" delay={100}>
-              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium mb-6">
                 🚀 Nova era dos pagamentos digitais
               </div>
             </AnimatedSection>
             
             <AnimatedSection animation="fade-up" delay={200}>
-              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                A plataforma de pagamentos que
+              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+                A plataforma de pagamentos que{' '}
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
                   faz sua receita decolar
                 </span>
@@ -39,8 +39,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
             </AnimatedSection>
             
             <AnimatedSection animation="fade-up" delay={300}>
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl">
-                Processe pagamentos, gerencie afiliados e escale seu negócio digital com a tecnologia mais avançada do mercado. 
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl">
+                Processe pagamentos, gerencie afiliados e escale seu negócio digital com a tecnologia mais avançada do mercado.{' '}
                 Sem burocracias, sem complicações.
               </p>
             </AnimatedSection>
@@ -51,7 +51,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700 font-medium">{benefit}</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">{benefit}</span>
                   </div>
                 ))}
               </div>
@@ -67,7 +67,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
                 
                 <button 
                   onClick={onNavigateToDashboard}
-                  className="group flex items-center justify-center px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold text-lg hover:border-blue-600 hover:text-blue-600 transition-all duration-200"
+                  className="group flex items-center justify-center px-8 py-4 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold text-lg hover:border-blue-600 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-all duration-200"
                 >
                   <Play className="mr-2 h-5 w-5" />
                   Ver Dashboard
@@ -77,7 +77,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
 
             {/* Trust Indicators */}
             <AnimatedSection animation="fade-up" delay={600}>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 <p>Mais de <span className="font-bold text-blue-600">50.000</span> empreendedores já confiam na Wave</p>
               </div>
             </AnimatedSection>
@@ -86,11 +86,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
           {/* Visual */}
           <AnimatedSection animation="scale" delay={400}>
             <div className="relative">
-              <div className="relative bg-white rounded-2xl shadow-2xl p-6 lg:p-8 border border-gray-200">
+              <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
                 {/* Dashboard Preview */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Dashboard Wave</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard Wave</h3>
                     <div className="flex space-x-2">
                       <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                       <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
@@ -114,16 +114,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
                   </div>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm font-medium">Produto Digital #1</span>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-sm font-medium dark:text-white">Produto Digital #1</span>
                       <span className="text-green-600 font-semibold">+R$ 2.890</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm font-medium">Curso Online Premium</span>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-sm font-medium dark:text-white">Curso Online Premium</span>
                       <span className="text-green-600 font-semibold">+R$ 1.650</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm font-medium">E-book Estratégias</span>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-sm font-medium dark:text-white">E-book Estratégias</span>
                       <span className="text-green-600 font-semibold">+R$ 890</span>
                     </div>
                   </div>
