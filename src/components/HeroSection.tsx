@@ -146,3 +146,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onNavigateToDashboard }) => {
 };
 
 export default HeroSection;
+
