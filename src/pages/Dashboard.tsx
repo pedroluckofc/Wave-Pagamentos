@@ -3,12 +3,17 @@ import {
   BarChart3, Users, DollarSign, TrendingUp, CreditCard, 
   Bell, Settings, Search, Filter, Download, Plus,
   ArrowUpRight, ArrowDownRight, Eye, Edit, Trash2,
-  Calendar, Clock, CheckCircle, AlertCircle, Zap
+  Calendar, Clock, CheckCircle, AlertCircle, Zap,
+  EyeOff, Moon, Sun, Link
 } from 'lucide-react';
 import MinimalChart from '../components/MinimalChart';
 import ProductModal from '../components/ProductModal';
 import ProductReportModal from '../components/ProductReportModal';
 import RevenueChart from '../components/RevenueChart';
+import AffiliateInviteModal from '../components/AffiliateInviteModal';
+import IntegrationsPage from '../components/IntegrationsPage';
+import SettingsModal from '../components/SettingsModal';
+import NotificationPanel from '../components/NotificationPanel';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface Sale {
@@ -50,14 +55,20 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('today');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sales, setSales] = useState<Sale[]>([]);
   const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isAffiliateInviteModalOpen, setIsAffiliateInviteModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const { isDark } = useTheme();
+  const [hiddenMetrics, setHiddenMetrics] = useState<Set<string>>(new Set());
+  const [hideAllValues, setHideAllValues] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   const [metrics, setMetrics] = useState({
     revenue: 24587,
@@ -216,21 +227,87 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
     setProducts(sampleProducts);
   }, []);
 
-  const MetricCard = ({ title, value, growth, icon: Icon, color }: any) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg bg-gradient-to-r ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+  const handleTimeRangeChange = (newRange: string) => {
+    setTimeRange(newRange);
+    console.log('Período alterado para:', newRange);
+    // Aqui você implementaria a lógica para buscar dados do período selecionado
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    console.log('Buscando por:', term);
+    // Aqui você implementaria a lógica de busca
+  };
+
+  const handleWithdraw = () => {
+    alert(`Iniciando saque de ${formatCurrency(metrics.revenue)}`);
+  };
+
+  const toggleMetricVisibility = (metricId: string) => {
+    setHiddenMetrics(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(metricId)) {
+        newSet.delete(metricId);
+      } else {
+        newSet.add(metricId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllValuesVisibility = () => {
+    setHideAllValues(!hideAllValues);
+  };
+
+  const handleInviteAffiliate = (inviteData: any) => {
+    console.log('Convite enviado:', inviteData);
+    alert(`Convite enviado para ${inviteData.email} com sucesso!`);
+  };
+
+  const MetricCard = ({ id, title, value, growth, icon: Icon, color, showWithdrawButton = false }: any) => {
+    const isHidden = hiddenMetrics.has(id) || hideAllValues;
+    
+    return (
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-3 rounded-lg bg-gradient-to-r ${color}`}>
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => toggleMetricVisibility(id)}
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300"
+              title={isHidden ? 'Mostrar valor' : 'Ocultar valor'}
+            >
+              {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            <div className={`flex items-center text-sm font-medium ${growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {growth >= 0 ? <ArrowUpRight className="h-4 w-4 mr-1" /> : <ArrowDownRight className="h-4 w-4 mr-1" />}
+              {Math.abs(growth)}%
+            </div>
+          </div>
         </div>
-        <div className={`flex items-center text-sm font-medium ${growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {growth >= 0 ? <ArrowUpRight className="h-4 w-4 mr-1" /> : <ArrowDownRight className="h-4 w-4 mr-1" />}
-          {Math.abs(growth)}%
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className={`text-2xl font-bold text-gray-900 dark:text-white mb-1 transition-all duration-300 ${
+              isHidden ? 'filter blur-sm select-none' : ''
+            }`}>
+              {value}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">{title}</p>
+          </div>
+          {showWithdrawButton && (
+            <button
+              onClick={handleWithdraw}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-300 text-sm"
+            >
+              Sacar
+            </button>
+          )}
         </div>
       </div>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{value}</h3>
-      <p className="text-gray-600 dark:text-gray-400 text-sm">{title}</p>
-    </div>
-  );
+    );
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -302,9 +379,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-500">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-500">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
@@ -319,8 +396,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
             <div className="flex items-center space-x-2">
               <select 
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                onChange={(e) => handleTimeRangeChange(e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
               >
                 <option value="today">Hoje</option>
                 <option value="week">Esta Semana</option>
@@ -336,14 +413,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
               />
             </div>
-            <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 relative">
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
+              title={isDark ? 'Tema Claro' : 'Tema Escuro'}
+            >
+              {isDark ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+            </button>
+            <button 
+              onClick={() => setIsNotificationPanelOpen(true)}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 relative transition-colors duration-300"
+            >
               <Bell className="h-6 w-6" />
               <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
             </button>
-            <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+            <button 
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-300"
+            >
               <Settings className="h-6 w-6" />
             </button>
           </div>
@@ -352,7 +444,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen">
+        <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen transition-colors duration-500">
           <nav className="p-6">
             <div className="space-y-2">
               {[
@@ -360,6 +452,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                 { id: 'sales', label: 'Vendas', icon: DollarSign },
                 { id: 'affiliates', label: 'Afiliados', icon: Users },
                 { id: 'products', label: 'Produtos', icon: CreditCard },
+                { id: 'integrations', label: 'Integrações', icon: Link },
                 { id: 'reports', label: 'Relatórios', icon: TrendingUp },
               ].map((item) => {
                 const Icon = item.icon;
@@ -367,7 +460,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-300 ${
                       activeTab === item.id
                         ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -386,16 +479,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
         <main className="flex-1 p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              {/* Controls */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Visão Geral</h2>
+                <button
+                  onClick={toggleAllValuesVisibility}
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-300"
+                >
+                  {hideAllValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <span>{hideAllValues ? 'Mostrar Valores' : 'Ocultar Valores'}</span>
+                </button>
+              </div>
+
               {/* Metrics Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
+                  id="revenue"
                   title="Receita Hoje"
                   value={formatCurrency(metrics.revenue)}
                   growth={metrics.revenueGrowth}
                   icon={DollarSign}
                   color="from-blue-500 to-blue-600"
+                  showWithdrawButton={true}
                 />
                 <MetricCard
+                  id="sales"
                   title="Vendas"
                   value={metrics.salesCount}
                   growth={metrics.salesGrowth}
@@ -403,6 +511,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                   color="from-green-500 to-green-600"
                 />
                 <MetricCard
+                  id="affiliates"
                   title="Afiliados Ativos"
                   value={metrics.activeAffiliates}
                   growth={metrics.affiliatesGrowth}
@@ -410,6 +519,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                   color="from-purple-500 to-purple-600"
                 />
                 <MetricCard
+                  id="conversion"
                   title="Taxa de Conversão"
                   value={`${metrics.conversionRate}%`}
                   growth={metrics.conversionGrowth}
@@ -444,7 +554,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
               </div>
 
               {/* Recent Sales */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Vendas Recentes</h2>
@@ -454,7 +564,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                 <div className="p-6">
                   <div className="space-y-4">
                     {sales.slice(0, 5).map((sale) => (
-                      <div key={sale.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div key={sale.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
                         <div className="flex items-center space-x-4">
                           <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(sale.status)}`}>
                             {getStatusIcon(sale.status)}
@@ -485,18 +595,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gerenciar Vendas</h2>
                 <div className="flex items-center space-x-3">
-                  <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white">
+                  <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white transition-colors duration-300">
                     <Filter className="h-4 w-4" />
                     <span>Filtrar</span>
                   </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white">
+                  <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white transition-colors duration-300">
                     <Download className="h-4 w-4" />
                     <span>Exportar</span>
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
@@ -511,7 +621,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                       {sales.map((sale) => (
-                        <tr key={sale.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <tr key={sale.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
                           <td className="py-4 px-6">
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">{sale.product}</p>
@@ -533,10 +643,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                           <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{formatDate(sale.date)}</td>
                           <td className="py-4 px-6">
                             <div className="flex items-center space-x-2">
-                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300">
                                 <Eye className="h-4 w-4" />
                               </button>
-                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600">
+                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors duration-300">
                                 <Edit className="h-4 w-4" />
                               </button>
                             </div>
@@ -554,24 +664,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gerenciar Afiliados</h2>
-                <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button 
+                  onClick={() => setIsAffiliateInviteModalOpen(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                >
                   <Plus className="h-4 w-4" />
                   <span>Convidar Afiliado</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total de Afiliados</h3>
                   <p className="text-3xl font-bold text-blue-600">{affiliates.length}</p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Comissões Pagas</h3>
                   <p className="text-3xl font-bold text-green-600">
                     {formatCurrency(affiliates.reduce((sum, affiliate) => sum + affiliate.commission, 0))}
                   </p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Conversão Média</h3>
                   <p className="text-3xl font-bold text-purple-600">
                     {(affiliates.reduce((sum, affiliate) => sum + affiliate.conversionRate, 0) / affiliates.length).toFixed(1)}%
@@ -579,7 +692,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
@@ -594,7 +707,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                       {affiliates.map((affiliate) => (
-                        <tr key={affiliate.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <tr key={affiliate.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
                           <td className="py-4 px-6">
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">{affiliate.name}</p>
@@ -611,13 +724,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                           </td>
                           <td className="py-4 px-6">
                             <div className="flex items-center space-x-2">
-                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300">
                                 <Eye className="h-4 w-4" />
                               </button>
-                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600">
+                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors duration-300">
                                 <Edit className="h-4 w-4" />
                               </button>
-                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600">
+                              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors duration-300">
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -637,7 +750,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Meus Produtos</h2>
                 <button 
                   onClick={handleCreateProduct}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Novo Produto</span>
@@ -646,7 +759,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map((product) => (
-                  <div key={product.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div key={product.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-gray-900 dark:text-white">{product.name}</h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
@@ -661,19 +774,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                     <div className="flex items-center space-x-2">
                       <button 
                         onClick={() => handleEditProduct(product)}
-                        className="flex-1 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 text-sm font-medium"
+                        className="flex-1 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 text-sm font-medium transition-colors duration-300"
                       >
                         Editar
                       </button>
                       <button 
                         onClick={() => handleViewReport(product)}
-                        className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 text-sm font-medium"
+                        className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 text-sm font-medium transition-colors duration-300"
                       >
                         Relatório
                       </button>
                       <button 
                         onClick={() => handleDeleteProduct(product.id)}
-                        className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600"
+                        className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors duration-300"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -684,17 +797,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
             </div>
           )}
 
+          {activeTab === 'integrations' && <IntegrationsPage />}
+
           {activeTab === 'reports' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Relatórios</h2>
                 <div className="flex items-center space-x-3">
-                  <select className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                  <select className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-colors duration-300">
                     <option>Últimos 7 dias</option>
                     <option>Últimos 30 dias</option>
                     <option>Últimos 90 dias</option>
                   </select>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
                     <Download className="h-4 w-4" />
                     <span>Exportar</span>
                   </button>
@@ -707,7 +822,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                   title="Receita por Período"
                 />
                 
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Produtos Mais Vendidos</h3>
                   <div className="space-y-4">
                     {products.map((product, index) => (
@@ -718,7 +833,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div 
-                            className="bg-blue-600 h-2 rounded-full" 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
                             style={{ width: `${(product.sales / Math.max(...products.map(p => p.sales))) * 100}%` }}
                           ></div>
                         </div>
@@ -745,6 +860,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         product={selectedProduct}
+      />
+
+      <AffiliateInviteModal
+        isOpen={isAffiliateInviteModalOpen}
+        onClose={() => setIsAffiliateInviteModalOpen(false)}
+        onSend={handleInviteAffiliate}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
+
+      <NotificationPanel
+        isOpen={isNotificationPanelOpen}
+        onClose={() => setIsNotificationPanelOpen(false)}
       />
     </div>
   );
