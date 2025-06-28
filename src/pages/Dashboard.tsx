@@ -281,7 +281,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
             >
               {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-            <div className={`flex items-center text-sm font-medium ${growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`flex items-center text-sm font-medium ${growth >= 0 ? 'text-green-600' : 'text-red-600'} ${
+              isHidden ? 'filter blur-lg select-none pointer-events-none' : ''
+            }`}>
               {growth >= 0 ? <ArrowUpRight className="h-4 w-4 mr-1" /> : <ArrowDownRight className="h-4 w-4 mr-1" />}
               {Math.abs(growth)}%
             </div>
@@ -290,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className={`text-2xl font-bold text-gray-900 dark:text-white mb-1 transition-all duration-300 ${
-              isHidden ? 'filter blur-sm select-none' : ''
+              isHidden ? 'filter blur-lg select-none pointer-events-none' : ''
             }`}>
               {value}
             </h3>
@@ -299,7 +301,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
           {showWithdrawButton && (
             <button
               onClick={handleWithdraw}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-300 text-sm"
+              className={`px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-300 text-sm ${
+                isHidden ? 'filter blur-lg pointer-events-none' : ''
+              }`}
             >
               Sacar
             </button>
@@ -530,27 +534,33 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
 
               {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <MinimalChart
-                  data={chartData.sales}
-                  title="Vendas (24h)"
-                  value={metrics.salesCount.toString()}
-                  growth={metrics.salesGrowth}
-                  color="#10b981"
-                />
-                <MinimalChart
-                  data={chartData.revenue.map(v => v / 100)}
-                  title="Receita (24h)"
-                  value={formatCurrency(metrics.revenue)}
-                  growth={metrics.revenueGrowth}
-                  color="#3b82f6"
-                />
-                <MinimalChart
-                  data={chartData.conversion}
-                  title="Conversão (24h)"
-                  value={`${metrics.conversionRate}%`}
-                  growth={metrics.conversionGrowth}
-                  color="#8b5cf6"
-                />
+                <div className={hideAllValues ? 'filter blur-lg pointer-events-none select-none' : ''}>
+                  <MinimalChart
+                    data={chartData.sales}
+                    title="Vendas (24h)"
+                    value={metrics.salesCount.toString()}
+                    growth={metrics.salesGrowth}
+                    color="#10b981"
+                  />
+                </div>
+                <div className={hideAllValues ? 'filter blur-lg pointer-events-none select-none' : ''}>
+                  <MinimalChart
+                    data={chartData.revenue.map(v => v / 100)}
+                    title="Receita (24h)"
+                    value={formatCurrency(metrics.revenue)}
+                    growth={metrics.revenueGrowth}
+                    color="#3b82f6"
+                  />
+                </div>
+                <div className={hideAllValues ? 'filter blur-lg pointer-events-none select-none' : ''}>
+                  <MinimalChart
+                    data={chartData.conversion}
+                    title="Conversão (24h)"
+                    value={`${metrics.conversionRate}%`}
+                    growth={metrics.conversionGrowth}
+                    color="#8b5cf6"
+                  />
+                </div>
               </div>
 
               {/* Recent Sales */}
@@ -579,7 +589,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-green-600">{formatCurrency(sale.amount)}</p>
+                          <p className={`font-bold text-green-600 ${
+                            hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                          }`}>
+                            {formatCurrency(sale.amount)}
+                          </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(sale.date)}</p>
                         </div>
                       </div>
@@ -631,7 +645,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                             </div>
                           </td>
                           <td className="py-4 px-6 text-gray-900 dark:text-white">{sale.customer}</td>
-                          <td className="py-4 px-6 font-semibold text-green-600">{formatCurrency(sale.amount)}</td>
+                          <td className={`py-4 px-6 font-semibold text-green-600 ${
+                            hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                          }`}>
+                            {formatCurrency(sale.amount)}
+                          </td>
                           <td className="py-4 px-6">
                             <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(sale.status)}`}>
                               {getStatusIcon(sale.status)}
@@ -676,17 +694,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total de Afiliados</h3>
-                  <p className="text-3xl font-bold text-blue-600">{affiliates.length}</p>
+                  <p className={`text-3xl font-bold text-blue-600 ${
+                    hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                  }`}>
+                    {affiliates.length}
+                  </p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Comissões Pagas</h3>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className={`text-3xl font-bold text-green-600 ${
+                    hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                  }`}>
                     {formatCurrency(affiliates.reduce((sum, affiliate) => sum + affiliate.commission, 0))}
                   </p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Conversão Média</h3>
-                  <p className="text-3xl font-bold text-purple-600">
+                  <p className={`text-3xl font-bold text-purple-600 ${
+                    hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                  }`}>
                     {(affiliates.reduce((sum, affiliate) => sum + affiliate.conversionRate, 0) / affiliates.length).toFixed(1)}%
                   </p>
                 </div>
@@ -714,9 +740,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                               <p className="text-sm text-gray-600 dark:text-gray-400">{affiliate.email}</p>
                             </div>
                           </td>
-                          <td className="py-4 px-6 font-semibold text-gray-900 dark:text-white">{affiliate.sales}</td>
-                          <td className="py-4 px-6 font-semibold text-green-600">{formatCurrency(affiliate.commission)}</td>
-                          <td className="py-4 px-6 font-semibold text-purple-600">{affiliate.conversionRate}%</td>
+                          <td className={`py-4 px-6 font-semibold text-gray-900 dark:text-white ${
+                            hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                          }`}>
+                            {affiliate.sales}
+                          </td>
+                          <td className={`py-4 px-6 font-semibold text-green-600 ${
+                            hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                          }`}>
+                            {formatCurrency(affiliate.commission)}
+                          </td>
+                          <td className={`py-4 px-6 font-semibold text-purple-600 ${
+                            hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                          }`}>
+                            {affiliate.conversionRate}%
+                          </td>
                           <td className="py-4 px-6">
                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(affiliate.status)}`}>
                               {affiliate.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -767,9 +805,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                       </span>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <p className="text-2xl font-bold text-green-600">{formatCurrency(product.price)}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{product.sales} vendas este mês</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500">Comissão: {product.commission}%</p>
+                      <p className={`text-2xl font-bold text-green-600 ${
+                        hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                      }`}>
+                        {formatCurrency(product.price)}
+                      </p>
+                      <p className={`text-sm text-gray-600 dark:text-gray-400 ${
+                        hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                      }`}>
+                        {product.sales} vendas este mês
+                      </p>
+                      <p className={`text-xs text-gray-500 dark:text-gray-500 ${
+                        hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                      }`}>
+                        Comissão: {product.commission}%
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
@@ -817,10 +867,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RevenueChart
-                  data={revenueData}
-                  title="Receita por Período"
-                />
+                <div className={hideAllValues ? 'filter blur-lg pointer-events-none select-none' : ''}>
+                  <RevenueChart
+                    data={revenueData}
+                    title="Receita por Período"
+                  />
+                </div>
                 
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Produtos Mais Vendidos</h3>
@@ -829,7 +881,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                       <div key={index} className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{product.sales} vendas</span>
+                          <span className={`text-sm text-gray-600 dark:text-gray-400 ${
+                            hideAllValues ? 'filter blur-lg select-none pointer-events-none' : ''
+                          }`}>
+                            {product.sales} vendas
+                          </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div 
