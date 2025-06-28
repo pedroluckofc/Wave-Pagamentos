@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Bell, CheckCircle, AlertCircle, Info, Trash2, MarkAsRead } from 'lucide-react';
+import { X, Bell, CheckCircle, AlertCircle, Info, Trash2, BookMarked as MarkAsRead } from 'lucide-react';
 
 interface Notification {
   id: string;
