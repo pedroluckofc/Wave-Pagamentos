@@ -12,6 +12,7 @@ import ProductReportModal from '../components/ProductReportModal';
 import RevenueChart from '../components/RevenueChart';
 import AffiliateInviteModal from '../components/AffiliateInviteModal';
 import IntegrationsPage from '../components/IntegrationsPage';
+import WaveCorePage from '../components/WaveCorePage';
 import SettingsModal from '../components/SettingsModal';
 import NotificationPanel from '../components/NotificationPanel';
 import { useTheme } from '../contexts/ThemeContext';
@@ -456,6 +457,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                 { id: 'sales', label: 'Vendas', icon: DollarSign },
                 { id: 'affiliates', label: 'Afiliados', icon: Users },
                 { id: 'products', label: 'Produtos', icon: CreditCard },
+                { id: 'wavecore', label: 'WaveCore™', icon: Zap },
                 { id: 'integrations', label: 'Integrações', icon: Link },
                 { id: 'reports', label: 'Relatórios', icon: TrendingUp },
               ].map((item) => {
@@ -472,6 +474,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
                   >
                     <Icon className="h-5 w-5" />
                     <span className="font-medium">{item.label}</span>
+                    {item.id === 'wavecore' && (
+                      <span className="ml-auto px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 rounded-full text-xs font-medium">
+                        NEW
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -846,6 +853,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
               </div>
             </div>
           )}
+
+          {activeTab === 'wavecore' && <WaveCorePage />}
 
           {activeTab === 'integrations' && <IntegrationsPage />}
 
