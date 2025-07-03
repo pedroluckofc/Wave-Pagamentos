@@ -6,6 +6,8 @@ import {
   Layers, GitBranch, Clock, CheckCircle, AlertCircle,
   Filter, Search, Download, Upload, Share2, Save
 } from 'lucide-react';
+import FunnelBuilderModal from './FunnelBuilderModal';
+import ConversationFlowModal from './ConversationFlowModal';
 
 interface Funnel {
   id: string;
@@ -28,6 +30,13 @@ interface FunnelStep {
   visitors: number;
   conversions: number;
   conversionRate: number;
+  settings?: {
+    title?: string;
+    description?: string;
+    price?: number;
+    delay?: number;
+    template?: string;
+  };
 }
 
 interface ConversationFlow {
@@ -40,12 +49,17 @@ interface ConversationFlow {
   messages: number;
   conversions: number;
   createdAt: Date;
+  flowMessages?: any[];
 }
 
 const WaveCorePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('funnels');
   const [selectedFunnel, setSelectedFunnel] = useState<Funnel | null>(null);
-  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [selectedFlow, setSelectedFlow] = useState<ConversationFlow | null>(null);
+  const [isFunnelBuilderOpen, setIsFunnelBuilderOpen] = useState(false);
+  const [isFlowBuilderOpen, setIsFlowBuilderOpen] = useState(false);
+  const [funnelModalMode, setFunnelModalMode] = useState<'create' | 'edit'>('create');
+  const [flowModalMode, setFlowModalMode] = useState<'create' | 'edit'>('create');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -113,7 +127,8 @@ const WaveCorePage: React.FC = () => {
       triggers: ['palavra-chave: oi', 'palavra-chave: olá', 'primeiro contato'],
       messages: 1247,
       conversions: 89,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10)
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
+      flowMessages: []
     },
     {
       id: '2',
@@ -124,7 +139,8 @@ const WaveCorePage: React.FC = () => {
       triggers: ['download e-book', 'inscrição newsletter'],
       messages: 3456,
       conversions: 234,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20)
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
+      flowMessages: []
     },
     {
       id: '3',
@@ -135,7 +151,8 @@ const WaveCorePage: React.FC = () => {
       triggers: ['carrinho abandonado'],
       messages: 567,
       conversions: 123,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5)
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+      flowMessages: []
     }
   ]);
 
@@ -207,54 +224,103 @@ const WaveCorePage: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const FunnelBuilder = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Construtor de Funil - {selectedFunnel?.name || 'Novo Funil'}
-          </h2>
-          <button
-            onClick={() => setIsBuilderOpen(false)}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            ✕
-          </button>
-        </div>
+  // Funnel Actions
+  const handleCreateFunnel = () => {
+    setSelectedFunnel(null);
+    setFunnelModalMode('create');
+    setIsFunnelBuilderOpen(true);
+  };
 
-        <div className="p-6 h-96 bg-gray-50 dark:bg-gray-700">
-          <div className="text-center text-gray-500 dark:text-gray-400 mt-20">
-            <Layers className="h-16 w-16 mx-auto mb-4 opacity-50" />
-            <h3 className="text-xl font-semibold mb-2">Construtor Visual de Funis</h3>
-            <p>Arraste e solte elementos para criar seu funil perfeito</p>
-            <div className="mt-8 flex justify-center space-x-4">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Adicionar Landing Page
-              </button>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                Adicionar Checkout
-              </button>
-              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                Adicionar Upsell
-              </button>
-            </div>
-          </div>
-        </div>
+  const handleEditFunnel = (funnel: Funnel) => {
+    setSelectedFunnel(funnel);
+    setFunnelModalMode('edit');
+    setIsFunnelBuilderOpen(true);
+  };
 
-        <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => setIsBuilderOpen(false)}
-            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            Cancelar
-          </button>
-          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Salvar Funil
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const handleSaveFunnel = (funnelData: Funnel) => {
+    if (funnelModalMode === 'create') {
+      setFunnels(prev => [...prev, funnelData]);
+    } else {
+      setFunnels(prev => prev.map(f => f.id === funnelData.id ? funnelData : f));
+    }
+  };
+
+  const handleDuplicateFunnel = (funnel: Funnel) => {
+    const duplicatedFunnel: Funnel = {
+      ...funnel,
+      id: Date.now().toString(),
+      name: `${funnel.name} (Cópia)`,
+      status: 'draft',
+      visitors: 0,
+      conversions: 0,
+      revenue: 0,
+      conversionRate: 0,
+      createdAt: new Date()
+    };
+    setFunnels(prev => [...prev, duplicatedFunnel]);
+  };
+
+  const handleDeleteFunnel = (funnelId: string) => {
+    if (confirm('Tem certeza que deseja excluir este funil?')) {
+      setFunnels(prev => prev.filter(f => f.id !== funnelId));
+    }
+  };
+
+  const handleToggleFunnelStatus = (funnelId: string) => {
+    setFunnels(prev => prev.map(f => 
+      f.id === funnelId 
+        ? { ...f, status: f.status === 'active' ? 'paused' : 'active' as any }
+        : f
+    ));
+  };
+
+  // Flow Actions
+  const handleCreateFlow = () => {
+    setSelectedFlow(null);
+    setFlowModalMode('create');
+    setIsFlowBuilderOpen(true);
+  };
+
+  const handleEditFlow = (flow: ConversationFlow) => {
+    setSelectedFlow(flow);
+    setFlowModalMode('edit');
+    setIsFlowBuilderOpen(true);
+  };
+
+  const handleSaveFlow = (flowData: ConversationFlow) => {
+    if (flowModalMode === 'create') {
+      setConversationFlows(prev => [...prev, flowData]);
+    } else {
+      setConversationFlows(prev => prev.map(f => f.id === flowData.id ? flowData : f));
+    }
+  };
+
+  const handleDuplicateFlow = (flow: ConversationFlow) => {
+    const duplicatedFlow: ConversationFlow = {
+      ...flow,
+      id: Date.now().toString(),
+      name: `${flow.name} (Cópia)`,
+      status: 'draft',
+      messages: 0,
+      conversions: 0,
+      createdAt: new Date()
+    };
+    setConversationFlows(prev => [...prev, duplicatedFlow]);
+  };
+
+  const handleDeleteFlow = (flowId: string) => {
+    if (confirm('Tem certeza que deseja excluir este fluxo?')) {
+      setConversationFlows(prev => prev.filter(f => f.id !== flowId));
+    }
+  };
+
+  const handleToggleFlowStatus = (flowId: string) => {
+    setConversationFlows(prev => prev.map(f => 
+      f.id === flowId 
+        ? { ...f, status: f.status === 'active' ? 'paused' : 'active' as any }
+        : f
+    ));
+  };
 
   return (
     <div className="space-y-6">
@@ -275,20 +341,23 @@ const WaveCorePage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white">
+          <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white transition-colors duration-300">
             <Upload className="h-4 w-4" />
             <span>Importar</span>
           </button>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg">
+          <button 
+            onClick={activeTab === 'funnels' ? handleCreateFunnel : handleCreateFlow}
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+          >
             <Plus className="h-4 w-4" />
-            <span>Novo Funil</span>
+            <span>{activeTab === 'funnels' ? 'Novo Funil' : 'Novo Fluxo'}</span>
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <Layers className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -303,7 +372,7 @@ const WaveCorePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -318,7 +387,7 @@ const WaveCorePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -333,7 +402,7 @@ const WaveCorePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
               <DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -386,21 +455,21 @@ const WaveCorePage: React.FC = () => {
             placeholder={`Buscar ${activeTab === 'funnels' ? 'funis' : 'fluxos'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-300"
           />
         </div>
         <div className="flex gap-2">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-300"
           >
             <option value="all">Todos os Status</option>
             <option value="active">Ativo</option>
             <option value="paused">Pausado</option>
             <option value="draft">Rascunho</option>
           </select>
-          <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white">
+          <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white transition-colors duration-300">
             <Download className="h-4 w-4" />
             <span>Exportar</span>
           </button>
@@ -458,22 +527,41 @@ const WaveCorePage: React.FC = () => {
                   </span>
                   <div className="flex items-center space-x-2">
                     <button 
-                      onClick={() => {
-                        setSelectedFunnel(funnel);
-                        setIsBuilderOpen(true);
-                      }}
+                      onClick={() => handleToggleFunnelStatus(funnel.id)}
+                      className={`p-2 transition-colors duration-300 ${
+                        funnel.status === 'active' 
+                          ? 'text-yellow-600 hover:text-yellow-700' 
+                          : 'text-green-600 hover:text-green-700'
+                      }`}
+                      title={funnel.status === 'active' ? 'Pausar' : 'Ativar'}
+                    >
+                      {funnel.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </button>
+                    <button 
+                      onClick={() => handleEditFunnel(funnel)}
                       className="p-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 transition-colors duration-300"
                       title="Editar"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300" title="Visualizar">
+                    <button 
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300" 
+                      title="Visualizar"
+                    >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors duration-300" title="Duplicar">
+                    <button 
+                      onClick={() => handleDuplicateFunnel(funnel)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors duration-300" 
+                      title="Duplicar"
+                    >
                       <Copy className="h-4 w-4" />
                     </button>
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors duration-300" title="Excluir">
+                    <button 
+                      onClick={() => handleDeleteFunnel(funnel.id)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors duration-300" 
+                      title="Excluir"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -541,13 +629,36 @@ const WaveCorePage: React.FC = () => {
                     Criado em {formatDate(flow.createdAt)}
                   </span>
                   <div className="flex items-center space-x-2">
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300" title="Editar">
+                    <button 
+                      onClick={() => handleToggleFlowStatus(flow.id)}
+                      className={`p-2 transition-colors duration-300 ${
+                        flow.status === 'active' 
+                          ? 'text-yellow-600 hover:text-yellow-700' 
+                          : 'text-green-600 hover:text-green-700'
+                      }`}
+                      title={flow.status === 'active' ? 'Pausar' : 'Ativar'}
+                    >
+                      {flow.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </button>
+                    <button 
+                      onClick={() => handleEditFlow(flow)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300" 
+                      title="Editar"
+                    >
                       <Edit className="h-4 w-4" />
                     </button>
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors duration-300" title="Duplicar">
+                    <button 
+                      onClick={() => handleDuplicateFlow(flow)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors duration-300" 
+                      title="Duplicar"
+                    >
                       <Copy className="h-4 w-4" />
                     </button>
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors duration-300" title="Excluir">
+                    <button 
+                      onClick={() => handleDeleteFlow(flow.id)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors duration-300" 
+                      title="Excluir"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -569,7 +680,7 @@ const WaveCorePage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Escolha entre dezenas de templates prontos para acelerar sua criação
           </p>
-          <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg">
+          <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-300">
             Explorar Templates
           </button>
         </div>
@@ -586,14 +697,28 @@ const WaveCorePage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Análises detalhadas de performance dos seus funis e fluxos
           </p>
-          <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg">
+          <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-300">
             Ver Relatórios
           </button>
         </div>
       )}
 
-      {/* Funnel Builder Modal */}
-      {isBuilderOpen && <FunnelBuilder />}
+      {/* Modals */}
+      <FunnelBuilderModal
+        isOpen={isFunnelBuilderOpen}
+        onClose={() => setIsFunnelBuilderOpen(false)}
+        onSave={handleSaveFunnel}
+        funnel={selectedFunnel}
+        mode={funnelModalMode}
+      />
+
+      <ConversationFlowModal
+        isOpen={isFlowBuilderOpen}
+        onClose={() => setIsFlowBuilderOpen(false)}
+        onSave={handleSaveFlow}
+        flow={selectedFlow}
+        mode={flowModalMode}
+      />
     </div>
   );
 };
