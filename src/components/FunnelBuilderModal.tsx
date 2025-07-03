@@ -3,8 +3,9 @@ import {
   X, Plus, Save, Eye, Settings, Trash2, ArrowRight, 
   MousePointer, CreditCard, Gift, CheckCircle, Mail, 
   Clock, Users, DollarSign, BarChart3, Layers,
-  Move, Copy, Edit3, Zap
+  Move, Copy, Edit3, Zap, Workflow
 } from 'lucide-react';
+import FlowBuilderView from './FlowBuilderView';
 
 interface FunnelStep {
   id: string;
@@ -13,6 +14,7 @@ interface FunnelStep {
   visitors: number;
   conversions: number;
   conversionRate: number;
+  position: { x: number; y: number };
   settings: {
     title?: string;
     description?: string;
@@ -20,6 +22,7 @@ interface FunnelStep {
     delay?: number;
     template?: string;
   };
+  connections?: string[];
 }
 
 interface Funnel {
@@ -53,6 +56,7 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('builder');
   const [selectedStep, setSelectedStep] = useState<FunnelStep | null>(null);
+  const [viewMode, setViewMode] = useState<'flow' | 'list'>('flow');
   const [funnelData, setFunnelData] = useState<Funnel>({
     id: funnel?.id || Date.now().toString(),
     name: funnel?.name || '',
@@ -64,7 +68,10 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
     revenue: funnel?.revenue || 0,
     conversionRate: funnel?.conversionRate || 0,
     createdAt: funnel?.createdAt || new Date(),
-    steps: funnel?.steps || []
+    steps: funnel?.steps?.map((step, index) => ({
+      ...step,
+      position: step.position || { x: 100 + (index * 350), y: 100 }
+    })) || []
   });
 
   if (!isOpen) return null;
@@ -140,7 +147,9 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
       visitors: 0,
       conversions: 0,
       conversionRate: 0,
-      settings: {}
+      position: { x: 100 + (funnelData.steps.length * 350), y: 100 },
+      settings: {},
+      connections: []
     };
 
     setFunnelData(prev => ({
@@ -154,19 +163,9 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
       ...prev,
       steps: prev.steps.filter(step => step.id !== stepId)
     }));
-  };
-
-  const duplicateStep = (step: FunnelStep) => {
-    const newStep: FunnelStep = {
-      ...step,
-      id: Date.now().toString(),
-      name: `${step.name} (Cópia)`
-    };
-
-    setFunnelData(prev => ({
-      ...prev,
-      steps: [...prev.steps, newStep]
-    }));
+    if (selectedStep?.id === stepId) {
+      setSelectedStep(null);
+    }
   };
 
   const updateStep = (stepId: string, updates: Partial<FunnelStep>) => {
@@ -176,6 +175,24 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
         step.id === stepId ? { ...step, ...updates } : step
       )
     }));
+    
+    if (selectedStep?.id === stepId) {
+      setSelectedStep(prev => prev ? { ...prev, ...updates } : null);
+    }
+  };
+
+  const duplicateStep = (step: FunnelStep) => {
+    const newStep: FunnelStep = {
+      ...step,
+      id: Date.now().toString(),
+      name: `${step.name} (Cópia)`,
+      position: { x: step.position.x + 50, y: step.position.y + 50 }
+    };
+
+    setFunnelData(prev => ({
+      ...prev,
+      steps: [...prev.steps, newStep]
+    }));
   };
 
   const handleSave = () => {
@@ -183,87 +200,38 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
     onClose();
   };
 
-  const StepCard = ({ step, index }: { step: FunnelStep; index: number }) => {
-    const Icon = getStepIcon(step.type);
-    const color = getStepColor(step.type);
-
-    return (
-      <div className="relative">
-        <div 
-          className={`bg-white dark:bg-gray-800 border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-            selectedStep?.id === step.id 
-              ? 'border-purple-500 shadow-lg' 
-              : 'border-gray-200 dark:border-gray-600'
-          }`}
-          onClick={() => setSelectedStep(step)}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className={`p-2 rounded-lg bg-gradient-to-r ${color}`}>
-                <Icon className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white">{step.name}</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{step.type}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  duplicateStep(step);
-                }}
-                className="p-1 text-gray-400 hover:text-blue-600 transition-colors duration-300"
-                title="Duplicar"
-              >
-                <Copy className="h-4 w-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeStep(step.id);
-                }}
-                className="p-1 text-gray-400 hover:text-red-600 transition-colors duration-300"
-                title="Remover"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div>
-              <p className="text-gray-500 dark:text-gray-400">Visitantes</p>
-              <p className="font-semibold text-gray-900 dark:text-white">{step.visitors.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 dark:text-gray-400">Conversões</p>
-              <p className="font-semibold text-green-600">{step.conversions}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 dark:text-gray-400">Taxa</p>
-              <p className="font-semibold text-purple-600">{step.conversionRate}%</p>
-            </div>
-          </div>
-        </div>
-
-        {index < funnelData.steps.length - 1 && (
-          <div className="flex justify-center my-2">
-            <ArrowRight className="h-6 w-6 text-gray-400" />
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const StepSettings = () => {
-    if (!selectedStep) return null;
+    if (!selectedStep) {
+      return (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 text-center">
+          <div className="text-gray-400 mb-4">
+            <Settings className="h-12 w-12 mx-auto" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Selecione uma Etapa
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Clique em uma etapa no canvas para configurá-la
+          </p>
+        </div>
+      );
+    }
 
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Configurações - {selectedStep.name}
-        </h3>
+        <div className="flex items-center space-x-3 mb-6">
+          <div className={`p-2 rounded-lg bg-gradient-to-r ${getStepColor(selectedStep.type)}`}>
+            {React.createElement(getStepIcon(selectedStep.type), { className: "h-5 w-5 text-white" })}
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {selectedStep.name}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+              {selectedStep.type}
+            </p>
+          </div>
+        </div>
 
         <div className="space-y-4">
           <div>
@@ -328,6 +296,45 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
               <option value="bold">Impactante</option>
             </select>
           </div>
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900 dark:text-white mb-3">Métricas</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">Visitantes</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {selectedStep.visitors.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">Conversões</p>
+                <p className="font-semibold text-green-600">
+                  {selectedStep.conversions}
+                </p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">Taxa</p>
+                <p className="font-semibold text-purple-600">
+                  {selectedStep.conversionRate}%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 pt-4">
+            <button
+              onClick={() => duplicateStep(selectedStep)}
+              className="flex-1 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 text-sm font-medium transition-colors duration-300"
+            >
+              Duplicar
+            </button>
+            <button
+              onClick={() => removeStep(selectedStep.id)}
+              className="flex-1 px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 text-sm font-medium transition-colors duration-300"
+            >
+              Excluir
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -364,7 +371,7 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
           <nav className="flex space-x-8">
             {[
               { id: 'settings', label: 'Configurações', icon: Settings },
-              { id: 'builder', label: 'Construtor', icon: Layers },
+              { id: 'builder', label: 'Construtor', icon: Workflow },
               { id: 'analytics', label: 'Analytics', icon: BarChart3 }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -481,66 +488,22 @@ const FunnelBuilderModal: React.FC<FunnelBuilderModalProps> = ({
 
           {activeTab === 'builder' && (
             <div className="flex flex-1">
-              {/* Steps Palette */}
-              <div className="w-80 bg-gray-50 dark:bg-gray-700 p-6 border-r border-gray-200 dark:border-gray-600 overflow-y-auto">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Elementos do Funil</h3>
-                <div className="space-y-3">
-                  {stepTypes.map((stepType) => {
-                    const Icon = stepType.icon;
-                    return (
-                      <button
-                        key={stepType.type}
-                        onClick={() => addStep(stepType.type)}
-                        className={`w-full flex items-center space-x-3 p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300 group`}
-                      >
-                        <div className={`p-2 rounded-lg bg-gradient-to-r ${stepType.color} group-hover:scale-110 transition-transform duration-300`}>
-                          <Icon className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-medium text-gray-900 dark:text-white">{stepType.name}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">{stepType.description}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {selectedStep && (
-                  <div className="mt-6">
-                    <StepSettings />
-                  </div>
-                )}
+              {/* Flow Builder Canvas */}
+              <div className="flex-1">
+                <FlowBuilderView
+                  steps={funnelData.steps}
+                  onStepUpdate={updateStep}
+                  onStepAdd={(step) => setFunnelData(prev => ({ ...prev, steps: [...prev.steps, step] }))}
+                  onStepRemove={removeStep}
+                  onStepSelect={setSelectedStep}
+                  selectedStep={selectedStep}
+                  isEditable={true}
+                />
               </div>
 
-              {/* Canvas */}
-              <div className="flex-1 p-6 overflow-y-auto">
-                <div className="max-w-2xl mx-auto">
-                  {funnelData.steps.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-gray-400 mb-4">
-                        <Layers className="h-16 w-16 mx-auto" />
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                        Construa seu funil
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-6">
-                        Adicione elementos da barra lateral para começar a construir seu funil
-                      </p>
-                      <button
-                        onClick={() => addStep('landing')}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
-                      >
-                        Adicionar Landing Page
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {funnelData.steps.map((step, index) => (
-                        <StepCard key={step.id} step={step} index={index} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {/* Settings Panel */}
+              <div className="w-80 bg-gray-50 dark:bg-gray-700 p-4 border-l border-gray-200 dark:border-gray-600 overflow-y-auto">
+                <StepSettings />
               </div>
             </div>
           )}
