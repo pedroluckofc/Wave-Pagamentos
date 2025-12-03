@@ -336,59 +336,54 @@ const WaveCorePage: React.FC = () => {
   };
 
   const handleGenerateAI = async () => {
+    if (!aiPrompt.trim() && !productContext.name) {
+      alert('Por favor, escreva uma pergunta ou preencha pelo menos o nome do produto');
+      return;
+    }
+
     setIsGenerating(true);
     setAiResponse('');
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    let response = '';
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase não configurado');
+      }
 
-    if (aiCategory === 'copy') {
-      const copyTemplates: Record<string, string> = {
-        headline: `Headline Sugerido:\n\n"Transforme Seu Negócio Digital Em Uma Máquina de Vendas Automatizada"\n\nAlternativas:\n1. "Triplique Suas Vendas Em 30 Dias Com Nossa Metodologia Comprovada"\n2. "O Sistema Completo Para Escalar Seu Infoproduto de R$ 0 a R$ 100k/Mês"\n3. "Descubra o Segredo dos Top 1% de Vendedores Digitais"`,
+      const apiUrl = `${supabaseUrl}/functions/v1/wave-ai`;
 
-        email: `Assunto: Você está perdendo R$ 15.847 por mês\n\n---\n\nOlá ${productContext.name || '[Nome]'},\n\nEnquanto você lê este email, seus concorrentes estão faturando MUITO mais que você.\n\nE não é porque eles têm um produto melhor...\n\nÉ porque eles descobriram o sistema que eu vou revelar para você hoje.\n\nEsse mesmo sistema que transformou:\n\n✓ João de R$ 3k para R$ 85k/mês em 4 meses\n✓ Maria de zero a R$ 50k/mês em apenas 60 dias\n✓ Pedro de R$ 10k para R$ 200k/mês em 6 meses\n\nE agora é a SUA vez.\n\n[Continue lendo...]\n\nP.S.: Esta oferta expira em 24 horas.`,
-
-        vsl: `Script VSL (Primeira Página):\n\n[GANCHO - 0:00 a 0:30]\n\n"Pare tudo que você está fazendo...\n\nSe você vende produtos digitais e ainda não está faturando pelo menos R$ 30.000 por mês, você PRECISA ver isso.\n\nNos próximos minutos, vou te mostrar o sistema EXATO que usei para ir de R$ 0 a R$ 150.000 em apenas 90 dias...\n\nE o melhor: você pode copiar tudo isso começando HOJE."\n\n[PROBLEMA - 0:30 a 2:00]\n\n"Você já sentiu que está fazendo TUDO certo...\n\nCriou o produto...\nFez as páginas de venda...\nGravou os vídeos...\n\nMas as vendas simplesmente NÃO APARECEM?\n\nEu sei exatamente como você se sente...\nPorque eu também já passei por isso."`,
-
-        landing: `Copy para Landing Page:\n\n[HERO SECTION]\n\nTítulo: "O Sistema Completo Para Você Sair de R$ 0 a R$ 50k/Mês Vendendo Infoprodutos"\n\nSubtítulo: "Descubra a metodologia que já ajudou 2.847 empreendedores a construir negócios digitais de 6 dígitos"\n\nCTA: [Garantir Minha Vaga Agora]\n\n[BENEFÍCIOS]\n\n✓ Sistema de Funil Automatizado\nVenda 24/7 sem precisar aparecer\n\n✓ Scripts de Venda Testados\nCopy que converte a partir de 8% de conversão\n\n✓ Estratégias de Tráfego Pago\nAnúncios que geram ROI de 3x a 10x\n\n✓ Gestão de Afiliados\nConstrua um exército de vendedores\n\n[PROVA SOCIAL]\n\n"Em 30 dias fui de R$ 5k para R$ 47k/mês"\n- Carlos Silva, São Paulo`,
-
-        ads: `Copy para Anúncio:\n\n[VERSÃO 1 - GANCHO DIRETO]\n\nTítulo: "R$ 50.000 em 30 Dias Vendendo Online"\n\nTexto: Você está a uma decisão de distância de transformar sua vida financeira. Clique e descubra como.\n\nCTA: Quero Conhecer o Método\n\n[VERSÃO 2 - PROBLEMA]\n\nTítulo: "Cansado de Trabalhar Duro e Ganhar Pouco?"\n\nTexto: E se eu te dissesse que existe um jeito de ganhar em 1 mês o que você ganha em 1 ano? Sistema comprovado. Resultados reais. Acesso imediato.\n\nCTA: Garantir Acesso Agora\n\n[VERSÃO 3 - CURIOSIDADE]\n\nTítulo: "O Segredo dos R$ 100k/Mês"\n\nTexto: Não é sorte. Não é dom. É um sistema simples que qualquer pessoa pode copiar. Veja a prova.\n\nCTA: Ver Prova Social`,
-
-        checkout: `Copy para Página de Checkout:\n\n[ACIMA DO FORMULÁRIO]\n\n🔥 Oferta Especial Termina em: [CONTADOR]\n\n"Você está a 1 clique de transformar seu negócio digital"\n\nO que você vai receber HOJE:\n\n✅ Acesso vitalício ao treinamento completo\n✅ Bônus exclusivos (valor R$ 3.497)\n✅ Suporte prioritário por 90 dias\n✅ Grupo VIP de networking\n✅ Atualizações gratuitas\n\nValor total: R$ 7.994\n\n[DESTAQUE]\nHOJE APENAS: R$ 497\nou 12x de R$ 48,90\n\n[ABAIXO DO BOTÃO]\n\n🔒 Compra 100% Segura\n✅ Garantia de 30 dias\n💳 Aceitamos todas as formas de pagamento\n\n"Comece hoje e veja resultados em 7 dias ou seu dinheiro de volta"`
-      };
-
-      response = copyTemplates[selectedCopyType] || 'Selecione um tipo de copy válido.';
-    } else {
-      const strategyTemplates = [
-        {
-          title: 'Estratégia de Lançamento Semente',
-          description: `FASE 1: PRÉ-LANÇAMENTO (7 dias)\n\n1. Conteúdo de Valor\n- Poste 3-5 conteúdos por dia sobre o problema\n- Stories mostrando bastidores\n- Enquetes para engajar a audiência\n\n2. Aquecimento\n- Anuncie que algo grande está vindo\n- Crie expectativa sem revelar detalhes\n- Abra lista de espera\n\nFASE 2: LANÇAMENTO (4 dias)\n\nDia 1: Abertura\n- Webinar ou VSL revelando a solução\n- Oferta com bônus limitados\n- Contador regressivo de 96h\n\nDia 2-3: Nutrição\n- Depoimentos de beta testers\n- Quebra de objeções\n- FAQ ao vivo\n\nDia 4: Encerramento\n- Último dia com urgência\n- Bônus extra para últimas horas\n- Fechamento às 23:59\n\nFASE 3: PÓS-LANÇAMENTO\n\n- Follow-up com quem não comprou\n- Oferta especial com desconto (48h)\n- Análise de métricas\n\nMETA: R$ 50k - R$ 150k em 4 dias`,
-
-          metrics: 'Taxa de conversão esperada: 3-8%'
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
         },
-        {
-          title: 'Funil Evergreen de Alto Ticket',
-          description: `ESTRUTURA COMPLETA:\n\n1. TRÁFEGO (Dia 0)\n- Anúncios no Facebook/Instagram\n- Público: Empreendedores 25-45 anos\n- Budget: R$ 100-300/dia\n\n2. CAPTURA (Dias 0-1)\n- Landing page com lead magnet\n- Ebook/Webinar grátis\n- Taxa de conversão: 35-50%\n\n3. NUTRIÇÃO (Dias 2-7)\n- Sequência de 5-7 emails\n- Conteúdo de valor + vendas\n- Direcionamento para VSL\n\n4. VENDA (Dia 7+)\n- VSL de 20-30 minutos\n- Oferta clara e urgente\n- Checkout com upsell\n\n5. PÓS-VENDA\n- Onboarding automatizado\n- Remarketing para não-compradores\n- Upsells adicionais\n\nINVESTIMENTO:\n- R$ 3.000-10.000/mês em tráfego\n- ROI esperado: 3x-8x\n\nTICKET MÉDIO: R$ 997-2.997`,
+        body: JSON.stringify({
+          prompt: aiPrompt,
+          type: aiCategory,
+          copyType: selectedCopyType,
+          context: productContext,
+        }),
+      });
 
-          metrics: 'Meta mensal: R$ 30k-100k'
-        },
-        {
-          title: 'Sistema de Afiliados Escalável',
-          description: `FASE 1: ESTRUTURAÇÃO\n\n1. Produto e Comissões\n- Defina comissão atrativa (30-50%)\n- Crie materiais de divulgação\n- Configure tracking avançado\n\n2. Recrutamento Inicial\n- Identifique 10-20 afiliados estratégicos\n- Grandes audiências no seu nicho\n- Ofereça exclusividade inicial\n\nFASE 2: ATIVAÇÃO\n\n1. Treinamento\n- Webinar de onboarding\n- Scripts e swipe files\n- Melhores práticas\n\n2. Materiais\n- Anúncios prontos\n- Emails de promoção\n- Stories e posts\n\n3. Suporte\n- Grupo exclusivo no Telegram\n- Suporte prioritário\n- Calls semanais\n\nFASE 3: ESCALA\n\n1. Gamificação\n- Ranking de afiliados\n- Prêmios por performance\n- Bônus progressivos\n\n2. Expansão\n- Abrir para mais afiliados\n- Criar níveis (bronze, prata, ouro)\n- Desenvolver super afiliados\n\nRESULTADO:\n- 50-200 afiliados ativos\n- 60-80% das vendas via afiliados\n- Crescimento orgânico exponencial`,
+      if (!response.ok) {
+        throw new Error(`Erro: ${response.statusText}`);
+      }
 
-          metrics: 'Meta: 100+ afiliados em 90 dias'
-        }
-      ];
+      const data = await response.json();
 
-      const selectedStrategy = Math.floor(Math.random() * strategyTemplates.length);
-      const strategy = strategyTemplates[selectedStrategy];
-
-      response = `${strategy.title}\n\n${strategy.description}\n\n📊 ${strategy.metrics}`;
+      if (data.success) {
+        setAiResponse(data.response);
+      } else {
+        throw new Error(data.error || 'Erro ao gerar conteúdo');
+      }
+    } catch (error) {
+      alert(`Erro ao gerar conteúdo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setIsGenerating(false);
     }
-
-    setAiResponse(response);
-    setIsGenerating(false);
   };
 
   const copyToClipboard = () => {
@@ -861,6 +856,21 @@ const WaveCorePage: React.FC = () => {
                       </select>
                     </div>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {aiCategory === 'copy' ? 'Instruções Específicas (Opcional)' : 'Descreva sua estratégia desejada'}
+                    </label>
+                    <textarea
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder={aiCategory === 'copy'
+                        ? 'Ex: Crie um headline focado em urgência com menção ao preço...'
+                        : 'Ex: Crie uma estratégia de lançamento para um curso de 6 meses...'}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                    />
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
