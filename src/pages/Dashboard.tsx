@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, Users, DollarSign, TrendingUp, CreditCard, 
+import {
+  BarChart3, Users, DollarSign, TrendingUp, CreditCard,
   Bell, Settings, Search, Filter, Download, Plus,
   ArrowUpRight, ArrowDownRight, Eye, Edit, Trash2,
   Calendar, Clock, CheckCircle, AlertCircle, Zap,
-  EyeOff, Moon, Sun, Link
+  EyeOff, Moon, Sun, Link, X
 } from 'lucide-react';
 import MinimalChart from '../components/MinimalChart';
 import ProductModal from '../components/ProductModal';
@@ -69,6 +69,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [hiddenMetrics, setHiddenMetrics] = useState<Set<string>>(new Set());
   const [hideAllValues, setHideAllValues] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [isWithdrawLoading, setIsWithdrawLoading] = useState(false);
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
   const { isDark, toggleTheme } = useTheme();
 
   const [metrics, setMetrics] = useState({
@@ -241,7 +245,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
   };
 
   const handleWithdraw = () => {
-    alert(`Iniciando saque de ${formatCurrency(metrics.revenue)}`);
+    setIsWithdrawModalOpen(true);
+    setWithdrawAmount(metrics.revenue.toString());
+    setWithdrawSuccess(false);
+  };
+
+  const handleProcessWithdraw = async () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      alert('Por favor, informe um valor válido');
+      return;
+    }
+
+    if (parseFloat(withdrawAmount) > metrics.revenue) {
+      alert('Valor do saque não pode ser superior à receita disponível');
+      return;
+    }
+
+    setIsWithdrawLoading(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setMetrics(prev => ({
+        ...prev,
+        revenue: prev.revenue - parseFloat(withdrawAmount)
+      }));
+
+      setWithdrawSuccess(true);
+
+      setTimeout(() => {
+        setIsWithdrawModalOpen(false);
+        setWithdrawSuccess(false);
+        setWithdrawAmount('');
+      }, 2000);
+    } finally {
+      setIsWithdrawLoading(false);
+    }
+  };
+
+  const handleCloseWithdrawModal = () => {
+    if (!isWithdrawLoading && !withdrawSuccess) {
+      setIsWithdrawModalOpen(false);
+      setWithdrawAmount('');
+    }
   };
 
   const toggleMetricVisibility = (metricId: string) => {
@@ -911,6 +957,108 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLanding }) => {
           )}
         </main>
       </div>
+
+      {/* Withdraw Modal */}
+      {isWithdrawModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg max-w-md w-full mx-4 overflow-hidden">
+            {!withdrawSuccess ? (
+              <>
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Solicitar Saque</h2>
+                  <button
+                    onClick={handleCloseWithdrawModal}
+                    disabled={isWithdrawLoading}
+                    className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors duration-300"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Saldo Disponível
+                    </label>
+                    <p className="text-3xl font-bold text-green-600">
+                      {formatCurrency(metrics.revenue)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="withdraw-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Quanto deseja sacar?
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium">
+                        R$
+                      </span>
+                      <input
+                        id="withdraw-amount"
+                        type="number"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        placeholder="0.00"
+                        disabled={isWithdrawLoading}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50 transition-colors duration-300"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                    {withdrawAmount && parseFloat(withdrawAmount) > metrics.revenue && (
+                      <p className="text-sm text-red-600 mt-2">
+                        Valor superior ao saldo disponível
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleCloseWithdrawModal}
+                      disabled={isWithdrawLoading}
+                      className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium disabled:opacity-50 transition-colors duration-300"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleProcessWithdraw}
+                      disabled={isWithdrawLoading || !withdrawAmount}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg disabled:opacity-50 font-medium transition-all duration-300 flex items-center justify-center space-x-2"
+                    >
+                      {isWithdrawLoading ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                          <span>Processando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <DollarSign className="h-4 w-4" />
+                          <span>Sacar</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-12 flex flex-col items-center justify-center text-center">
+                <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/30 rounded-full">
+                  <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Saque Realizado com Sucesso!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Valor de {formatCurrency(parseFloat(withdrawAmount))} foi sacado com sucesso.
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  O saque será processado em até 2-3 dias úteis.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <ProductModal
