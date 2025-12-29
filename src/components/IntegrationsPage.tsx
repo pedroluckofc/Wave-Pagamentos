@@ -14,6 +14,7 @@ interface Integration {
   status: 'connected' | 'available' | 'coming-soon';
   color: string;
   features: string[];
+  url?: string;
 }
 
 const IntegrationsPage: React.FC = () => {
@@ -29,6 +30,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Zap,
       status: 'connected',
       color: 'from-orange-500 to-red-500',
+      url: 'https://www.hotmart.com',
       features: ['Sincronização automática', 'Gestão de afiliados', 'Relatórios unificados']
     },
     {
@@ -39,6 +41,7 @@ const IntegrationsPage: React.FC = () => {
       icon: ShoppingCart,
       status: 'available',
       color: 'from-green-500 to-teal-500',
+      url: 'https://www.kiwify.com.br',
       features: ['Checkout otimizado', 'Gestão de produtos', 'Analytics avançado']
     },
     {
@@ -49,6 +52,7 @@ const IntegrationsPage: React.FC = () => {
       icon: ShoppingCart,
       status: 'available',
       color: 'from-green-600 to-green-700',
+      url: 'https://www.shopify.com',
       features: ['Sincronização de produtos', 'Gestão de pedidos', 'Inventário automático']
     },
     {
@@ -59,6 +63,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Mail,
       status: 'available',
       color: 'from-yellow-500 to-orange-500',
+      url: 'https://mailchimp.com',
       features: ['Listas automáticas', 'Campanhas segmentadas', 'Automação de vendas']
     },
     {
@@ -69,6 +74,7 @@ const IntegrationsPage: React.FC = () => {
       icon: BarChart3,
       status: 'connected',
       color: 'from-blue-500 to-indigo-500',
+      url: 'https://analytics.google.com',
       features: ['Tracking avançado', 'Conversões', 'Relatórios personalizados']
     },
     {
@@ -79,6 +85,7 @@ const IntegrationsPage: React.FC = () => {
       icon: CreditCard,
       status: 'available',
       color: 'from-purple-500 to-indigo-500',
+      url: 'https://stripe.com',
       features: ['Pagamentos globais', 'Múltiplas moedas', 'Checkout seguro']
     },
     {
@@ -89,6 +96,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Globe,
       status: 'available',
       color: 'from-blue-600 to-blue-700',
+      url: 'https://wordpress.org',
       features: ['Plugin nativo', 'Shortcodes', 'Widgets personalizados']
     },
     {
@@ -99,6 +107,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Zap,
       status: 'available',
       color: 'from-orange-400 to-orange-600',
+      url: 'https://zapier.com',
       features: ['Automações ilimitadas', '5000+ apps', 'Workflows personalizados']
     },
     {
@@ -109,6 +118,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Smartphone,
       status: 'coming-soon',
       color: 'from-green-400 to-green-600',
+      url: 'https://www.whatsapp.com/business',
       features: ['Notificações automáticas', 'Suporte integrado', 'Campanhas direcionadas']
     },
     {
@@ -119,6 +129,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Users,
       status: 'coming-soon',
       color: 'from-indigo-500 to-purple-500',
+      url: 'https://discord.com',
       features: ['Acesso automático', 'Roles por produto', 'Notificações de vendas']
     },
     {
@@ -129,6 +140,7 @@ const IntegrationsPage: React.FC = () => {
       icon: FileText,
       status: 'coming-soon',
       color: 'from-gray-600 to-gray-700',
+      url: 'https://www.notion.so',
       features: ['Databases automáticos', 'Relatórios dinâmicos', 'Templates prontos']
     },
     {
@@ -139,6 +151,7 @@ const IntegrationsPage: React.FC = () => {
       icon: Calendar,
       status: 'available',
       color: 'from-blue-400 to-blue-600',
+      url: 'https://calendly.com',
       features: ['Agendamento automático', 'Lembretes por email', 'Integração com calendários']
     }
   ];
@@ -191,10 +204,8 @@ const IntegrationsPage: React.FC = () => {
   };
 
   const handleConnect = (integration: Integration) => {
-    if (integration.status === 'available') {
-      alert(`Iniciando conexão com ${integration.name}...`);
-    } else if (integration.status === 'connected') {
-      alert(`Configurar ${integration.name}...`);
+    if (integration.url) {
+      window.open(integration.url, '_blank');
     }
   };
 
@@ -313,7 +324,11 @@ const IntegrationsPage: React.FC = () => {
                       <Settings className="h-4 w-4 inline mr-2" />
                       Configurar
                     </button>
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300">
+                    <button
+                      onClick={() => handleConnect(integration)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors duration-300"
+                      title={`Abrir ${integration.name}`}
+                    >
                       <ExternalLink className="h-4 w-4" />
                     </button>
                   </>
