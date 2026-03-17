@@ -4,9 +4,10 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface HeaderProps {
   onNavigateToDashboard?: () => void;
+  onNavigateToSignup?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNavigateToDashboard }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigateToDashboard, onNavigateToSignup }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isDark, toggleTheme } = useTheme();
@@ -70,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToDashboard }) => {
             >
               Dashboard
             </button>
-            <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+            <button onClick={onNavigateToSignup} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200">
               Criar Conta Grátis
             </button>
           </div>
@@ -116,7 +117,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToDashboard }) => {
               >
                 Dashboard
               </button>
-              <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold">
+              <button onClick={() => {
+                  onNavigateToSignup?.();
+                  setIsMenuOpen(false);
+                }} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold">
                 Criar Conta Grátis
               </button>
             </div>

@@ -10,9 +10,10 @@ import DashboardSection from './components/DashboardSection';
 import FAQSection from './components/FAQSection';
 import Footer from './components/Footer';
 import Dashboard from './pages/Dashboard';
+import Signup from './pages/Signup';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'signup'>('landing');
 
   if (currentView === 'dashboard') {
     return (
@@ -22,10 +23,18 @@ function App() {
     );
   }
 
+  if (currentView === 'signup') {
+    return (
+      <ThemeProvider>
+        <Signup onNavigateToLanding={() => setCurrentView('landing')} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-white dark:bg-gray-900">
-        <Header onNavigateToDashboard={() => setCurrentView('dashboard')} />
+        <Header onNavigateToDashboard={() => setCurrentView('dashboard')} onNavigateToSignup={() => setCurrentView('signup')} />
         <HeroSection onNavigateToDashboard={() => setCurrentView('dashboard')} />
         <WhyChooseSection />
         <FeaturesSection />
